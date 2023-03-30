@@ -1,0 +1,43 @@
+objectTypes = {
+	pdxparticle = {
+		name = "nova_explosion"
+		type = "bunny_explosion"
+		
+		scale = 50.0
+	}
+	
+	pdxparticle = {
+		name = "planet_destruction"
+		type = "bunny_explosion_avatar"
+		
+		scale = 45.0
+	}
+	
+	pdxparticle = {
+		name = "avatar_core_effect_particle"
+		type = "avatar_core_effect"
+		
+		scale = 1.5
+	}
+	
+	pdxparticle = {
+		name = "avatar_core_explosion_particle"
+		type = "avatar_core_explosion"
+		
+		scale = 4.0
+	}
+	
+	pdxparticle = {
+		name = "avatar_energy_weapon_hit_particle"
+		type = "blue_laser_hit_effect"
+		
+		scale = 5.0
+	}
+	
+	pdxparticle = {
+		name = "isb_titan_core_01_particle"
+		type = "isb_titan_core_01_effect"
+		
+		scale = 1.5
+	}
+}

@@ -1,0 +1,67 @@
+ship_section_template = {
+	key = "RAGNAROK_SECTION"
+	ship_size = ragnarok
+	fits_on_slot = mid
+	entity = "ragnarok_section_entity"
+	icon = "GFX_ship_part_core_mid"
+	
+	resources = {
+		category = ship_sections
+		cost = {
+			alloys = 10000
+		}
+	}
+	
+	#weapon_preferences = { weapon_role_long_range }
+	
+	component_slot = {
+		name = "EXTRA_LARGE_GUN_01"
+		template = "invisible_extra_large_fixed"
+		locatorname = "xl_weapon"
+	}
+
+	component_slot = {
+		name = "EXTRA_LARGE_GUN_02"
+		template = "invisible_extra_large_fixed"
+		locatorname = "xl_weapon"
+	}
+	
+	component_slot = {
+		name = "EXTRA_LARGE_GUN_03"
+		template = "invisible_extra_large_fixed"
+		locatorname = "xl_weapon"
+	}
+
+	component_slot = {
+		name = "EXTRA_LARGE_GUN_04"
+		template = "invisible_extra_large_fixed"
+		locatorname = "xl_weapon"
+	}
+	
+	component_slot = {
+		name = "MEDIUM_GUN_01"
+		template = "medium_turret"
+		locatorname = "root"
+	}
+	
+	component_slot = {
+		name = "MEDIUM_GUN_02"
+		template = "medium_turret"
+		locatorname = "root"
+	}
+	
+	component_slot = {
+		name = "MEDIUM_GUN_03"
+		template = "medium_turret"
+		locatorname = "root"
+	}
+	
+	component_slot = {
+		name = "MEDIUM_GUN_04"
+		template = "medium_turret"
+		locatorname = "root"
+	}
+
+	large_utility_slots = 8
+	aux_utility_slots = 4
+}

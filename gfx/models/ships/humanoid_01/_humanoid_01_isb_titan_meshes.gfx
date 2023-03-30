@@ -1,0 +1,114 @@
+objectTypes = {
+	pdxmesh = {
+		name = "humanoid_01_isb_titan_frame_mesh"
+		file = "gfx/models/ships/titans/humanoid_01/humanoid_01_titan_frame.mesh"
+		
+		animation = { id = "idle"						type = "arthropoid_01_titan_frame_idle_animation" }
+		animation = { id = "death"						type = "arthropoid_01_titan_frame_death_animation" }
+		
+	}
+	
+	pdxmesh = {
+		name = "humanoid_01_isb_titan_bow_mesh"
+		file = "gfx/models/ships/titans/humanoid_01/humanoid_01_titan_bow.mesh"
+
+		meshsettings = {
+			name = "humanoid_01_titan_bowShape"
+			index = 0
+			texture_diffuse = "humanoid_01_titan_diffuse.dds"
+			texture_normal = "humanoid_01_titan_normal.dds"
+			texture_specular = "humanoid_01_titan_specular.dds"
+			shader = "PdxMeshShip"
+		}
+	}
+	
+	pdxmesh = {
+		name = "humanoid_01_isb_titan_mid_mesh"
+		file = "gfx/models/ships/titans/humanoid_01/humanoid_01_titan_mid.mesh"
+
+		meshsettings = {
+			name = "humanoid_01_titan_midShape"
+			index = 0
+			texture_diffuse = "humanoid_01_titan_diffuse.dds"
+			texture_normal = "humanoid_01_titan_normal.dds"
+			texture_specular = "humanoid_01_titan_specular.dds"
+			shader = "PdxMeshShip"
+		}
+	}
+	
+	pdxmesh = {
+		name = "humanoid_01_isb_titan_stern_mesh"
+		file = "gfx/models/ships/titans/humanoid_01/humanoid_01_titan_stern.mesh"
+
+		meshsettings = {
+			name = "humanoid_01_titan_sternShape"
+			index = 0
+			texture_diffuse = "humanoid_01_titan_diffuse.dds"
+			texture_normal = "humanoid_01_titan_normal.dds"
+			texture_specular = "humanoid_01_titan_specular.dds"
+			shader = "PdxMeshShip"
+		}
+	}
+
+	pdxmesh = {
+		name = "humanoid_01_isb_titan_old_frame_mesh"
+		#file = "gfx/models/ships/humanoid_01/humanoid_01_battleship_frame.mesh"
+		file = "gfx/models/ships/humanoid_01/humanoid_01_cruiser_frame.mesh"
+				animation = { id = "idle"			type = "humanoid_01_cruiser_frame_idle_animation" }
+				animation = { id = "death"			type = "humanoid_01_cruiser_frame_death_animation" }
+				animation = { id = "death2"			type = "humanoid_01_cruiser_frame_death2_animation" }
+				animation = { id = "death3"			type = "humanoid_01_cruiser_frame_death3_animation" }
+		
+				#animation = { id = "idle"			type = "humanoid_01_battleship_frame_idle_animation" }
+				#animation = { id = "death"			type = "humanoid_01_battleship_frame_death_animation" }
+				#animation = { id = "death2"			type = "humanoid_01_battleship_frame_death2_animation" }
+				#animation = { id = "death3"			type = "humanoid_01_battleship_frame_death3_animation" }
+				#animation = { id = "attack"			type = "humanoid_01_battleship_frame_idle_animation" }
+		scale = 1.25
+				meshsettings = {
+			shader = "PdxMeshShip"
+	}
+	}
+
+	#######  Battleship bow sections  #######
+	pdxmesh = {
+		name = "humanoid_01_isb_titan_old_bow_mesh"
+		file = "gfx/models/ships/humanoid_01/humanoid_01_battleship_bow_XL1.mesh"
+		scale = 1.25
+		#meshsettings = {
+		#	shader = "PdxMeshShip"
+		#
+		#	#Mipmap tweaking
+		#	#texture_diffuse = "2x2.dds"
+		#}
+	}
+
+	#######  Battleship mid sections  #######
+
+	pdxmesh = {
+		name = "humanoid_01_isb_titan_old_mid_mesh"
+		#file = "gfx/models/ships/humanoid_01/humanoid_01_cruiser_mid_L1M1.mesh"
+		file = "gfx/models/ships/humanoid_01/humanoid_01_cruiser_mid_S2HB.mesh"
+		scale = 1.5
+		#meshsettings = {
+		#	shader = "PdxMeshShip"
+		#
+		#	#Mipmap tweaking
+		#	#texture_diffuse = "2x2.dds"
+		#}
+	}
+
+
+	#######  Battleship stern sections  #######
+	pdxmesh = {
+		name = "humanoid_01_isb_titan_old_stern_mesh"
+		file = "gfx/models/ships/humanoid_01/humanoid_01_cruiser_stern_M1.mesh"
+		scale = 1.0
+		#meshsettings = {
+		#	shader = "PdxMeshShip"
+		#
+		#	#Mipmap tweaking
+		#	#texture_diffuse = "2x2.dds"
+		#}
+	}
+}

@@ -1,0 +1,2390 @@
+namespace = avatar_doomsday
+
+fleet_event = {
+	id = avatar_doomsday.1
+	is_triggered_only = yes
+	hide_window = yes
+
+	#mean_time_to_happen = {
+	#	days = 40
+	#}
+
+	trigger = {
+		is_ship_size = avatar
+		exists = OWNER
+		OWNER = {
+			is_country_type = default
+			is_ai = no
+		}
+		exists = ORBIT
+		ORBIT = {
+			is_star = no
+		}
+	}
+
+	immediate = {
+		OWNER = {
+			every_owned_ship = {
+				limit = { is_ship_size = avatar }
+				ship_event = { id = avatar_doomsday.2 }
+			}
+		}
+
+	}
+}
+
+# Replacment for avatar_doomsday.2 MTTH
+ship_event = {
+	id = avatar_doomsday.5
+	hide_window = yes
+	is_triggered_only = yes
+
+	picture = GFX_evt_physics_research
+
+	title = ship_trigger
+
+	desc = {
+		text = you_found_ship
+	}
+	immediate = {		
+		# Replacement for MTTH. Should be an infinite loop
+		ship_event = { id = avatar_doomsday.5 days = 7 }
+		ship_event = { id = avatar_doomsday.2 days = 1 }	
+	}
+}
+
+# Replacment for avatar_doomsday.2 MTTH
+event = {
+	id = avatar_doomsday.6
+	hide_window = yes
+	is_triggered_only = yes
+
+	picture = GFX_evt_physics_research
+
+	title = ship_trigger
+
+	desc = {
+		text = you_found_ship
+	}
+	immediate = {
+		# Starts the infinite event loop per ship, Called from on_action monthly
+		every_country = {
+			limit = {
+				is_ai = no
+			}
+			# Should only have 1 Avatar / Ragnarok
+			random_owned_ship = {
+				limit = {
+					OR = {
+						is_ship_size = avatar
+						is_ship_size = ragnarok
+					}					
+				}
+				
+				if = {
+					limit = { NOT = { has_ship_flag = isb_doomsday_ship_loop } }
+					set_ship_flag = isb_doomsday_ship_loop
+					
+					ship_event = { id = avatar_doomsday.5 }
+				}
+			}
+		}		
+	}
+}
+
+# Orbiting an empty planet
+ship_event = {
+	id = avatar_doomsday.2
+	hide_window = yes
+	is_triggered_only = yes
+
+	picture = GFX_evt_physics_research
+
+	title = ship_trigger
+
+	desc = {
+		text = you_found_ship
+	}
+
+	trigger = {
+		# Only players can build and use Avatars for now
+		OWNER = {
+			is_ai = no
+		}
+		# v1.5 Ragnarok
+		# No fleet restrictions for AI Ragnarok
+		OR = {
+			is_ship_size = avatar
+			is_ship_size = ragnarok
+		}
+	}
+
+	# MTTH is bad
+	#mean_time_to_happen = {
+	#	days = 5
+	#}
+
+	immediate = {	
+		# Ensure the Avatar is not in any fleets - because buggy
+		if = {
+			limit = {				
+				FLEET = {
+					num_ships > 1
+				}
+			}
+
+			# Disable the Avatar, cannot do anything else. Event lock the fleet as well so nothing moves.
+			if = {
+				limit = {
+					OWNER = { NOT = { has_special_project = PROJ_AVATAR_ERROR_02 } }
+					FLEET =  { NOT = { has_fleet_flag = flag_avatar_disabled } }
+				}
+
+				# Trigger Error
+				OWNER = { country_event = { id = avatar_doomsday.99 } }
+
+				enable_special_project = {
+					name = "PROJ_AVATAR_ERROR_02"
+					location = THIS
+					OWNER = OWNER
+				}
+				
+				FLEET = {
+					set_event_locked = yes
+					set_fleet_flag = flag_avatar_disabled
+				}
+			}			
+			
+			set_disabled = yes
+		}
+		else = {				
+			# Enable avatar
+			if = {
+				limit = {						
+					is_disabled = yes
+					# v1.5 Ragnarok
+					NOT = { has_ship_flag = flag_rag_firing }
+				}
+				
+				set_disabled = no
+
+				# Unlock fleet(s)
+				OWNER = {
+					every_owned_fleet = {
+						limit = {
+							has_fleet_flag = flag_avatar_disabled
+						}
+						set_event_locked = no
+						remove_fleet_flag = flag_avatar_disabled							
+					}						
+				}					
+			}
+
+			OWNER = { save_event_target_as = avatar_owner }
+			# Can only destroy empty planets or planets with hostile colonies
+			if = {
+				limit = {
+					exists = ORBIT
+					OWNER = { has_edict = doomsday_longinus_authorisation }
+					ORBIT = {
+						is_star = no
+						OR = {
+							AND = {
+								NOT = { exists = OWNER }
+								NOT = {
+									any_country = {
+										NOT = { is_hostile = event_target:avatar_owner }
+										PREV = { is_inside_border = PREV }
+										NOT = { is_same_value = event_target:avatar_owner }
+									}
+								}
+							}
+							AND = {
+								exists = OWNER
+								OWNER = { is_hostile = event_target:avatar_owner }
+							}
+						}
+						NOT = {
+							OR = {
+								is_planet_class = pc_asteroid									
+								is_planet_class = pc_ringworld_habitable_nova
+								is_planet_class = pc_ringworld_tech_nova
+								is_planet_class = pc_ringworld_seam_nova
+								is_planet_class = pc_destroyed
+								is_planet_class = pc_nova
+								is_planet_class = pc_nova_gas
+							}
+						}
+					}
+				}
+				ORBIT = {
+					#save_event_target_as = avatar_planet
+					planet_event = { id = avatar_doomsday.3 days = 3}
+				}
+				
+				#v 1.5 ragnarok
+				if = {
+					limit = {
+						is_ship_size = ragnarok
+					}
+					
+					FLEET = {
+						clear_orders = yes
+						set_location = {
+							target = ORBIT
+							distance = -1.3
+							angle = 270
+						}
+						set_event_locked = yes
+						#create_ambient_object = {
+						#	type = "exploding_bunny_avatar_object"
+						#	location = solar_system
+						#}
+						#last_created_ambient_object = {
+						#	set_ambient_object_flag = is_bunny
+						#	set_location = {
+						#		target = event_target:avatar_planet
+						#		distance = 0.1
+						#		angle = 0
+						#	}
+						#}
+					}
+				}
+				else = {
+					FLEET = {
+						clear_orders = yes
+						set_location = {
+							target = ORBIT
+							distance = 0.11
+							angle = 0
+						}
+						set_event_locked = yes
+						#create_ambient_object = {
+						#	type = "exploding_bunny_avatar_object"
+						#	location = solar_system
+						#}
+						#last_created_ambient_object = {
+						#	set_ambient_object_flag = is_bunny
+						#	set_location = {
+						#		target = event_target:avatar_planet
+						#		distance = 0.1
+						#		angle = 0
+						#	}
+						#}
+					}
+				}
+			}			
+			else = {
+				# Avatar Error 03 - cannot destroy planet
+				if = {
+					limit = {
+						exists = ORBIT
+						OWNER = { has_edict = doomsday_longinus_authorisation }OWNER = { has_country_flag = edict_doomsday_longinus_auth }
+						NOT = { OWNER = { has_country_flag = avatar_doomsday_error_03 } }
+						ORBIT = {
+							NOT = {
+								OR = {
+									is_planet_class = pc_destroyed
+									is_planet_class = pc_nova
+									is_planet_class = pc_nova_gas
+								}										
+							}
+						}
+					}							
+												
+					OWNER = { 
+						set_country_flag = avatar_doomsday_error_03
+						country_event = { id = avatar_doomsday.98 } 
+					}
+				}
+			}
+		}
+	}
+}
+
+# To kill the bunnies
+fleet_event = {
+	id = avatar_doomsday.7
+	hide_window = yes
+	is_triggered_only = yes
+
+	immediate = {
+		destroy_fleet = THIS
+	}
+}
+
+# To delay unlock
+fleet_event = {
+	id = avatar_doomsday.8
+	hide_window = yes
+	is_triggered_only = yes
+
+	immediate = {
+		set_event_locked = no
+	}
+}
+
+planet_event = {
+	id = avatar_doomsday.3
+	hide_window = yes
+	is_triggered_only = yes
+
+	immediate = {
+		#solar_system = {
+		#	random_system_ambient_object = {
+		#		limit = {
+		#			has_ambient_object_flag = is_bunny
+		#		}
+
+		#		destroy_ambient_object = this
+		#	}
+		#}
+		save_event_target_as = bunny_planet
+		#print_scope_effect = yes
+		if = {
+			limit = {
+				NOT = {
+					any_country = {
+						is_country_type = bunny
+					}
+				}
+			}
+			
+			create_country = {
+				name = "Angel"
+				type = bunny
+			}
+		}
+		random_country = { 
+			limit = { 
+				is_country_type = bunny
+			}							
+			save_event_target_as = bunny_owner
+		}			
+		#v1.5 Ragnarok
+		if = {
+			limit = {
+				FROM = { is_ship_size = ragnarok }
+			}
+			create_fleet = {
+				name = "Angel"
+				effect = {					
+					#set_owner = ROOT
+					set_owner = event_target:bunny_owner
+					create_ship = {
+						name = "3rd Impact"
+						design = "NAME_consume_planet"
+						#graphical_culture = ROOT
+					}
+					set_event_locked = yes
+					set_location = {
+						target = event_target:bunny_planet
+						distance = 0.1
+						angle = 0
+					}
+					fleet_event = { id = avatar_doomsday.7 days = 36 }
+				}
+			}
+		}
+		else = {
+			create_fleet = {
+				name = "Angel"
+				effect = {
+					set_owner = event_target:bunny_owner
+					create_ship = {
+						name = "2nd Impact"
+						design = "NAME_destroy_planet"
+						#graphical_culture = ROOT
+					}
+					set_event_locked = yes
+					set_location = {
+						target = event_target:bunny_planet
+						distance = 0.1
+						angle = 0
+					}						
+					fleet_event = { id = avatar_doomsday.7 days = 36 }
+				}
+			}		
+		}
+		
+
+		planet_event = { id = avatar_doomsday.4 days = 11 }
+		
+		# v1.5 Ragnarok - check event chain / weapon recharge
+		FROM = { ship_event = { id = isb_ragnarok.52 } }
+	}
+}
+
+# destroy planet
+planet_event = {
+	id = avatar_doomsday.4
+	hide_window = yes
+	is_triggered_only = yes
+
+	immediate = {
+		FROMFROM = {
+			OWNER = {
+				change_variable = {
+					which = "planets_destroyed"
+					value = 1
+				}
+			}
+		}
+
+		if = {
+			limit = {
+				NOT = { exists = OWNER }
+			}
+			if = {
+				limit = {
+					OR = {
+						# If system is not in any borders, or in borders of an actual Empire
+						solar_system = {
+							NOT = {
+								any_country = {							
+									PREV = { is_inside_border = PREV}
+								}
+							}
+						}
+						solar_system = {
+							any_country = {
+								OR = {
+									is_country_type = default
+									is_country_type = rebel
+									is_country_type = fallen_empire
+								}
+								PREV = { is_inside_border = PREV}
+							}
+						}
+					}
+				}
+				# Reaction to destroying a planet
+				FROMFROM = { OWNER = { country_event = { id = titan_doomsday.803 } } }
+			}
+		}
+		else = {
+			# Opinion only applies when used against other empires or rebels
+			if = {
+				limit = {
+					OR = {
+						OWNER = { is_country_type = default }
+						OWNER = { is_country_type = rebel }
+						OWNER = { is_country_type = fallen_empire }
+					}
+				}
+				# Reaction to destroying a planet
+				FROMFROM = { OWNER = { country_event = { id = titan_doomsday.803 } } }
+				# Used a doomsday weapon on a colony
+				FROMFROM = { OWNER = { country_event = { id = titan_doomsday.802 } } }
+				FROMFROM = { OWNER = { country_event = { id = titan_doomsday.808 } } }
+				# Owners reaction - have to scope to Avatar owner country to call Owner mod
+				FROMFROM = { OWNER = { country_event = { id = avatar_doomsday.801 } } }
+			}
+
+			destroy_colony = yes
+			#set_planet_max_health = 0
+		}
+
+		clear_deposits = yes
+		# Ringworld destruction
+		if = {
+			limit = {
+				OR = {
+					is_planet_class = pc_ringworld_habitable
+					is_planet_class = pc_ringworld_habitable_damaged
+					is_planet_class = pc_ringworld_tech
+					is_planet_class = pc_ringworld_tech_damaged
+					is_planet_class = pc_ringworld_seam
+					is_planet_class = pc_ringworld_seam_damaged
+				}
+			}
+
+			if = {
+				limit = {
+					OR = {
+						is_planet_class = pc_ringworld_habitable
+						is_planet_class = pc_ringworld_habitable_damaged
+					}
+				}
+				change_pc = pc_ringworld_habitable_nova
+			}
+			else = {
+				if = {
+					limit = {
+						OR = {
+								is_planet_class = pc_ringworld_tech
+								is_planet_class = pc_ringworld_tech_damaged
+						}
+					}
+					change_pc = pc_ringworld_tech_nova
+
+					else = {
+						if = {
+							limit = {
+								OR = {
+										is_planet_class = pc_ringworld_seam
+										is_planet_class = pc_ringworld_seam_damaged
+								}
+							}
+							change_pc = pc_ringworld_seam_nova
+						}
+					}
+				}
+			}
+		}
+		else = {
+			if = {
+				limit = {
+					NOT = { is_planet_class = pc_asteroid }
+				}
+				if = {
+					limit = {
+						is_planet_class = pc_gas_giant
+					}
+					change_pc = pc_nova_gas
+				}
+				else = {
+					if = {
+						limit = {
+							NOT = { is_planet_class = pc_nova }
+						}
+						random_list = {
+							10 = {
+								change_pc = pc_destroyed
+								set_ring = yes
+							}
+							90 = {
+								#change_pc = pc_toxic
+								change_pc = pc_nova
+								set_ring = no
+							}
+						}
+					}
+				}
+			}
+		}
+
+		FROMFROM = {
+			FLEET = {
+				fleet_event = { id = avatar_doomsday.8 days = 36 }
+			}
+		}
+	}
+}
+
+# Avatar Error 01 - Cannot be in a fleet with other ships
+country_event = {
+	id = avatar_doomsday.99
+	hide_window = no
+	is_triggered_only = yes
+	picture = GFX_evt_unknown_ships
+	show_sound = event_nova_alert
+
+	title = avatar_error_02.name
+
+	desc = {
+		text = avatar_error_02.desc
+	}
+
+	immediate = {
+	}
+
+	option = {
+		name = avatar_error_02.a
+	}
+}
+
+# Avatar Error 02 - Cannot destroy planet
+country_event = {
+	id = avatar_doomsday.98
+	hide_window = no
+	is_triggered_only = yes
+	picture = GFX_evt_unknown_ships
+	show_sound = event_nova_alert
+
+	title = avatar_error_03.name
+
+	desc = {
+		text = avatar_error_03.desc
+	}
+
+	immediate = {
+	}
+
+	option = {
+		name = avatar_error_03.a
+		country_event = { id = avatar_doomsday.201 days = 60 } # Prevents error message spam
+	}
+}
+
+# Avatar Error 02 - Cannot destroy planet - Clear Spam Protection
+country_event = {
+	id = avatar_doomsday.201
+	hide_window = yes
+	is_triggered_only = yes
+	picture = GFX_evt_unknown_ships	
+
+	title = avatar_error_03.name
+
+	desc = {
+		text = avatar_error_03.desc
+	}
+
+	immediate = {
+		remove_country_flag = avatar_doomsday_error_03
+	}
+}
+
+# Frame Construction
+country_event = {
+	id = avatar_doomsday.101
+	hide_window = no
+	is_triggered_only = yes
+	picture = GFX_evt_mining_station
+
+	title = avatar_constructor_01.name
+
+	desc = {
+		text = avatar_constructor_01.desc
+	}
+
+	trigger = {
+		FROM = { is_ship_size = avatar_constructor }
+		is_ai = no
+	}
+
+	immediate = {
+		# Check to see if flag is still valid
+		random_system = {
+			limit = {
+				has_star_flag = flag_avatar_build_system
+			}
+
+			if = {
+				limit = {
+					NOT = {
+						any_ship_in_system = {
+							is_ship_size = avatar_frame
+						}
+					}
+				}
+
+				remove_star_flag = flag_avatar_build_system
+			}
+		}
+	}
+
+	# Disband
+	option = {
+		name = avatar_constructor_01.b
+	}
+	#Cancel Order
+	option = {
+		name = avatar_constructor_01.c
+		# Cancel and recreate ship
+		FROM = {
+			create_fleet = {
+				effect = {
+					set_owner = ROOT
+					create_ship = {
+						name = random
+						random_existing_design = "avatar_constructor"
+						#graphical_culture = ROOT
+					}
+					set_location = PREV
+				}
+			}
+		}
+	}
+	# Create Avatar Frame
+	option = {
+		name = avatar_constructor_01.a
+		# Only one avatar can be constructed
+		if = {
+			limit = {
+				NOT = { any_system = { has_star_flag = flag_avatar_build_system } }
+				NOT = { any_owned_ship = { is_ship_size = avatar } }
+			}
+			# Construction Confirmation in option
+			# Start construction
+			FROM = {
+				solar_system = {
+					set_star_flag = flag_avatar_build_system
+				}
+			}
+
+			create_fleet = {
+				effect = {
+					set_owner = ROOT
+					create_ship = {
+						name = "Frame"
+						design = "NAME_Avatar_Construction"
+						#graphical_culture = ROOT
+					}
+					set_location = {
+						target = FROM
+						distance = 0
+					}
+				}
+			}
+			last_created_fleet = {
+				enable_special_project = {
+					name = "PROJ_AVATAR_CONSTRUCT_01"
+					location = THIS
+					OWNER = ROOT
+				}
+			}
+		}		
+		else = {
+			# Show error message
+			country_event = { id = avatar_doomsday.199 }
+		}
+	}
+}
+
+# Avatar Construction Start
+ship_event = {
+	id = avatar_doomsday.102
+	hide_window = no
+	is_triggered_only = yes
+	picture = GFX_evt_galactic_senate
+
+	title = avatar_construction_start.name
+
+	desc = {
+		text = avatar_construction_start.desc
+	}
+
+	immediate = {
+
+		OWNER = { save_event_target_as = avatar_owner }
+		solar_system = {
+			random_fleet_in_system = {
+				limit = {
+					is_ship_size = avatar_frame
+				}
+				enable_special_project = {
+					name = "PROJ_AVATAR_CONSTRUCT_02"
+					location = THIS
+					OWNER = event_target:avatar_owner
+				}
+
+				add_modifier = {
+					modifier = mod_avatar_frame_active
+				}
+			}
+
+			#save_global_event_target_as = avatar_build_system
+		}
+
+		# Start Avatar construction events, all +30 random days
+		# Scouts - ~6 months after construction start
+		# vanguard - ~24 months after scouts
+		# break - ~24 months after vanguard
+		# main - ~24 months after break
+		# break 2 - ~24 months after main
+		# final - 11 months after break 2
+		event_target:avatar_owner = {
+			country_event = { id = avatar_doomsday.104 days = 180 random = 30 }
+		}
+	}
+
+	option = {
+		name = avatar_construction_start.a
+	}
+}
+
+# Avatar Construction Complete
+country_event = {
+	id = avatar_doomsday.103
+	hide_window = no
+	is_triggered_only = yes
+	picture = GFX_evt_small_space_battle
+
+	title = avatar_construction_complete.name
+
+	desc = {
+		text = avatar_construction_complete.desc
+	}
+
+	immediate = {
+		# Construction frame, ship scope. Random so you can skip assault events through manual trigger
+		#FROMFROM = { save_event_target_as = avatar_frame }
+		random_owned_ship = {
+			limit = {
+				is_ship_size = avatar_frame
+			}
+
+			save_event_target_as = avatar_frame_loc
+		}
+		create_fleet = {
+			effect = {
+				set_owner = ROOT
+				create_ship = {
+					name = random
+					design = "NAME_Doom_Star"
+					#graphical_culture = ROOT
+				}
+				#set_location = {
+				#	target = event_target:avatar_frame
+				#	distance = 10
+				#	angle = -90
+				#}
+				set_location = event_target:avatar_frame_loc
+				set_fleet_stance = aggressive
+			}
+		}
+		event_target:avatar_frame_loc = {
+			FLEET = {
+				destroy_fleet = THIS
+			}
+		}
+	}
+
+	option = {
+		name = avatar_construction_complete.a
+	}
+}
+
+# Main wave loop
+country_event = {
+	id = avatar_doomsday.104
+	hide_window = yes
+	is_triggered_only = yes
+	picture = GFX_evt_physics_research
+
+	title = raiders_main
+
+	desc = {
+		text = you_are_raiders
+	}
+
+	immediate = {
+		save_event_target_as = avatar_owner
+
+		# Check if avatar still under construction
+		if = {
+			limit = {
+				has_special_project = PROJ_AVATAR_CONSTRUCT_02
+			}
+
+			if = {
+				limit = {
+					check_variable = {
+						which = "avatar_wave"
+						value < 1
+					}
+				}
+
+				set_variable = {
+					which = "avatar_wave"
+					value = 1
+				}
+			}
+
+			# Count approximate enemies
+			set_variable = {
+				which = "avatar_enemy_count"
+				value = 1
+			}
+
+			# Check to see if flag is still valid
+			random_system = {
+				limit = {
+					has_star_flag = flag_avatar_build_system
+				}
+
+				save_event_target_as = avatar_build_system
+			}
+
+			random_system = {
+				limit = {
+					distance = {
+						source = event_target:avatar_build_system
+						max_distance <= 80
+						min_distance >= 2
+					}
+				}
+				random_system_planet = {
+					limit = {
+						is_star = yes
+					}
+					save_event_target_as = raider_spawn_star
+				}
+			}
+
+			# create raiders -  auto delete?
+			create_country = {
+				name = "Raiders"
+				type = pirate
+				species = random
+				name_list = "PRT1"
+				auto_delete = yes
+				flag = {
+					icon = {
+						category = "pirate"
+						file = "flag_pirate_7.dds"
+					}
+					background = {
+						category = "backgrounds"
+						file = "00_solid.dds"
+					}
+					colors ={
+						"red"
+						"red"
+						"null"
+						"null"
+					}
+				}
+			}
+
+			last_created_country = {
+				set_name = random
+				#random_list = {
+				#	17 = {
+				#		set_graphical_culture = arthropoid_01
+				#	}
+				#	17 = {
+				#		set_graphical_culture = avian_01
+				#	}
+				#	17 = {
+				#		set_graphical_culture = fungoid_01
+				#	}
+				#	16 = {
+				#		set_graphical_culture = mammalian_01
+				#	}
+				#	16 = {
+				#		set_graphical_culture = molluscoid_01
+				#	}
+				#	17 = {
+				#		set_graphical_culture = reptilian_01
+				#	}
+				#}
+				establish_communications_no_message = event_target:avatar_owner
+				save_event_target_as = avatar_raider
+
+				create_fleet = {
+					name = "Raiders"
+					settings = { spawn_debris = no }
+				}
+
+				#spawn based on wave
+				if = {
+					limit = {
+						PREV = {
+							check_variable = {
+								which = "avatar_wave"
+								value = 1
+							}
+						}
+					}
+
+					# wave 1 - scouts
+					PREV = { country_event = { id = avatar_doomsday.105 } }
+				}
+				else_if = {					
+					limit = {
+						PREV = {
+							check_variable = {
+								which = "avatar_wave"
+								value = 2
+							}
+						}
+					}
+
+					# wave 2 - vanguard
+					PREV = { country_event = { id = avatar_doomsday.106 } }
+				}
+				else_if = {				
+					limit = {
+						PREV = {
+							check_variable = {
+								which = "avatar_wave"
+								value = 3
+							}
+						}
+					}
+
+					# wave 3 - break
+					PREV = { country_event = { id = avatar_doomsday.109 } }
+				}
+				else_if = {						
+					limit = {
+						PREV = {
+							check_variable = {
+								which = "avatar_wave"
+								value = 4
+							}
+						}
+					}
+
+					# wave 4 - main. At least 2 Titans and 1 Leviathan
+					PREV = {
+						country_event = { id = avatar_doomsday.107 }
+						create_ship_design = {
+							random_existing_design = "titan"
+							#ftl = yes
+						}
+						last_created_fleet = {
+							if = {
+								limit = {
+									OWNER = {
+										count_owned_ship = {
+											limit = { 
+												FLEET = { is_same_value = PREVPREVPREV }
+												is_ship_size = titan 
+											}
+											count < 2
+										}
+									}
+								}
+								create_ship = {
+									name = random
+									design = last_created_design
+									graphical_culture = last_created_country
+								}
+								create_ship = {
+									name = random
+									design = last_created_design
+									graphical_culture = last_created_country
+								}
+							}
+						}
+						create_ship_design = {
+							random_existing_design = "leviathan"
+							#ftl = yes
+						}
+						last_created_fleet = {
+							if = {
+								limit = {
+									OWNER = {
+										count_owned_ship = {
+											limit = { 
+												FLEET = { is_same_value = PREVPREVPREV }
+												is_ship_size = leviathan 
+											}
+											count < 1
+										}
+									}
+								}
+								create_ship = {
+									name = random
+									design = last_created_design
+									graphical_culture = "fallen_empire_03"
+								}
+							}
+							
+							# Add one more Fallen Empire Leviathan
+							create_ship = {
+								name = random
+								design = last_created_design
+								graphical_culture = "fallen_empire_02"
+							}
+						}
+						create_ship_design = { design = "NAME_Judicator" }
+						last_created_fleet = {
+							create_ship = {
+								name = random
+								design = last_created_design
+								graphical_culture = "fallen_empire_02"
+							}
+							create_ship = {
+								name = random
+								design = last_created_design
+								graphical_culture = "fallen_empire_01"
+							}
+						}
+					}				
+				}
+				else_if = {						
+					limit = {
+						PREV = {
+							check_variable = {
+								which = "avatar_wave"
+								value = 5
+							}
+						}
+					}
+
+					# wave 5 - break
+					PREV = { country_event = { id = avatar_doomsday.109 } }					
+				}
+				else_if = {						
+					limit = {
+						PREV = {
+							check_variable = {
+								which = "avatar_wave"
+								value = 6
+							}
+						}
+					}
+
+					# wave 6 - final. Min 4 Titans and 2 Leviathans
+					PREV = {
+						country_event = { id = avatar_doomsday.108 }
+						create_ship_design = {
+							random_existing_design = "titan"
+							#ftl = yes
+						}
+						last_created_fleet = {
+							if = {
+								limit = {
+									OWNER = {
+										count_owned_ship = {
+											limit = { 
+												FLEET = { is_same_value = PREVPREVPREV }
+												is_ship_size = titan 
+											}
+											count < 4
+										}
+									}
+								}
+								create_ship = {
+									name = random
+									design = last_created_design
+									graphical_culture = last_created_country
+								}
+								create_ship = {
+									name = random
+									design = last_created_design
+									graphical_culture = last_created_country
+								}
+								create_ship = {
+									name = random
+									design = last_created_design
+									graphical_culture = last_created_country
+								}
+							}
+						}
+						create_ship_design = {
+							random_existing_design = "leviathan"
+							#ftl = yes
+						}
+						last_created_fleet = {
+							if = {
+								limit = {
+									OWNER = {
+										count_owned_ship = {
+											limit = { 
+												FLEET = { is_same_value = PREVPREVPREV }
+												is_ship_size = leviathan 
+											}
+											count < 2
+										}
+									}
+								}
+								create_ship = {
+									name = random
+									design = last_created_design
+									graphical_culture = "fallen_empire_01"
+								}
+								create_ship = {
+									name = random
+									design = last_created_design
+									graphical_culture = "fallen_empire_03"
+								}
+							}
+							
+							# Add 2 more Fallen Empire Leviathans
+							create_ship = {
+								name = random
+								design = last_created_design
+								graphical_culture = "fallen_empire_02"
+							}
+							create_ship = {
+								name = random
+								design = last_created_design
+								graphical_culture = "fallen_empire_01"
+							}
+						}
+
+						create_ship_design = { design = "NAME_Judicator" }
+						last_created_fleet = {
+							create_ship = {
+								name = random
+								design = last_created_design
+								graphical_culture = "fallen_empire_02"
+							}
+							create_ship = {
+								name = random
+								design = last_created_design
+								graphical_culture = "fallen_empire_01"
+							}
+							create_ship = {
+								name = random
+								design = last_created_design
+								graphical_culture = "fallen_empire_03"
+							}
+						}
+					}
+				}
+
+				last_created_fleet = {
+					add_modifier = {
+						modifier = mod_avatar_raider
+					}
+
+					set_location = {
+						target = event_target:raider_spawn_star
+						distance = 270
+						angle = random
+					}
+
+					set_owner = event_target:avatar_raider
+					set_fleet_stance = aggressive
+					set_aggro_range_measure_from = self
+					set_aggro_range = 500
+
+					queue_actions = {
+						find_closest_system = {
+							trigger = {
+								id = "avatar_doomsday.104.trigger.1"
+								has_star_flag = flag_avatar_build_system
+							}
+							found_system = {
+								move_to = THIS
+							}
+						}
+					}
+				}
+			}
+
+			change_variable = {
+				which = "avatar_wave"
+				value = 1
+			}
+
+			# 6 waves
+			if = {
+				limit = {
+					check_variable = {
+						which = "avatar_wave"
+						value < 7
+					}
+				}
+
+				if = {
+					limit = {
+						check_variable = {
+							which = "avatar_wave"
+							value = 6
+						}
+					}
+
+					#final wave
+					country_event = { id = avatar_doomsday.104 days = 334 }
+				}
+				else = {
+					country_event = { id = avatar_doomsday.104 days = 730 random = 30 }
+				}
+			}
+		}
+	}
+}
+
+# First assault - scout
+country_event = {
+	id = avatar_doomsday.105
+	hide_window = no
+	is_triggered_only = yes
+	picture = GFX_evt_fleet_good
+
+	title = avatar_raid_01.name
+
+	desc = {
+		text = avatar_raid_01.desc
+	}
+
+	immediate = {
+		last_created_fleet = {
+			set_name = "NAME_Raider_Scouts"
+		}
+
+		FROM = {
+			set_variable = {
+				which = "avatar_enemy_count"
+				value = 1
+			}
+		}
+
+		# Look for countries who hate player with at least some military. Minimum 6 countries regardless of power or opinion.
+		every_country = {
+			limit = {
+				OR = {
+					is_country_type = default
+					is_country_type = fallen_empire
+				}
+				has_communications = FROM
+				NOT = { is_country = FROM }
+			}
+
+			if = {
+				limit = {
+					OR = {
+						AND = {
+							THIS = { fleet_power > 50000 }
+							# Opinion < -50 doesn't work. Wut
+							NOT = {
+								opinion = {
+									who = FROM
+									value > -50
+								}
+							}
+						}
+						FROM = {
+							check_variable = {
+								which = "avatar_enemy_count"
+								value < 7
+							}
+						}
+					}
+				}
+
+
+				# Increment enemy count
+				FROM = {
+					change_variable = {
+						which = "avatar_enemy_count"
+						value = 1
+					}
+				}
+
+				# Corvettes
+				create_ship_design = {
+					random_existing_design = "corvette"
+					#ftl = yes
+				}
+				last_created_fleet = {
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+				}
+
+				# Destroyers
+				create_ship_design = {
+					random_existing_design = "destroyer"
+					#ftl = yes
+				}
+				last_created_fleet = {
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+				}
+			}
+		}
+	}
+
+	option = {
+		name = avatar_raid_01.a
+	}
+}
+
+# second assault
+country_event = {
+	id = avatar_doomsday.106
+	hide_window = no
+	is_triggered_only = yes
+	picture = GFX_evt_fleet_good
+
+	title = avatar_raid_02.name
+
+	desc = {
+		text = avatar_raid_02.desc
+	}
+
+	immediate = {
+		last_created_fleet = {
+			set_name = "NAME_Raider_Vanguard"
+		}
+
+		# Count approximate enemies
+		FROM = {
+			set_variable = {
+				which = "avatar_enemy_count"
+				value = 1
+			}
+		}
+
+		# Look for countries who hate player with at least some military. Minimum 6 countries regardless of power or opinion.
+		every_country = {
+			limit = {
+				OR = {
+					is_country_type = default
+					is_country_type = fallen_empire
+				}
+				has_communications = FROM
+				NOT = { is_country = FROM }
+			}
+
+			if = {
+				limit = {
+					OR = {
+						AND = {
+							THIS = { fleet_power > 50000 }
+							NOT = {
+								opinion = {
+									who = FROM
+									value > -50
+								}
+							}
+						}
+						FROM = {
+							check_variable = {
+								which = "avatar_enemy_count"
+								value < 7
+							}
+						}
+					}
+				}
+
+				# Increment enemy count
+				FROM = {
+					change_variable = {
+						which = "avatar_enemy_count"
+						value = 1
+					}
+				}
+
+				# Corvettes
+				create_ship_design = {
+					random_existing_design = "corvette"
+					#ftl = yes
+				}
+				last_created_fleet = {
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+				}
+
+				# Destroyers
+				create_ship_design = {
+					random_existing_design = "destroyer"
+					#ftl = yes
+				}
+				last_created_fleet = {
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+				}
+
+				# Cruisers
+				create_ship_design = {
+					random_existing_design = "cruiser"
+					#ftl = yes
+				}
+				last_created_fleet = {
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+				}
+
+				# Battleships
+				create_ship_design = {
+					random_existing_design = "battleship"
+					#ftl = yes
+				}
+				last_created_fleet = {
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+				}
+			}
+		}
+	}
+
+	option = {
+		name = avatar_raid_02.a
+	}
+}
+
+# third assault
+country_event = {
+	id = avatar_doomsday.107
+	hide_window = no
+	is_triggered_only = yes
+	picture = GFX_evt_fleet_good
+
+	title = avatar_raid_03.name
+
+	desc = {
+		text = avatar_raid_03.desc
+	}
+
+	immediate = {
+		last_created_fleet = {
+			set_name = "NAME_Main_Battle_Fleet"
+		}
+
+		FROM = {
+			set_variable = {
+				which = "avatar_enemy_count"
+				value = 1
+			}
+		}
+
+		# Look for countries who hate player with at least some military. Minimum 6 countries regardless of power or opinion.
+		every_country = {
+			limit = {
+				OR = {
+					is_country_type = default
+					is_country_type = fallen_empire
+				}
+				has_communications = FROM
+				NOT = { is_country = FROM }
+			}
+
+			if = {
+				limit = {
+					OR = {
+						AND = {
+							THIS = { fleet_power > 50000 }
+							NOT = {
+								opinion = {
+									who = FROM
+									value > -50
+								}
+							}
+						}
+						FROM = {
+							check_variable = {
+								which = "avatar_enemy_count"
+								value < 7
+							}
+						}
+					}
+				}
+
+				# Increment enemy count
+				FROM = {
+					change_variable = {
+						which = "avatar_enemy_count"
+						value = 1
+					}
+				}
+
+				# Corvettes
+				create_ship_design = {
+					random_existing_design = "corvette"
+					#ftl = yes
+				}
+				last_created_fleet = {
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+				}
+
+				# Cruisers
+				create_ship_design = {
+					random_existing_design = "cruiser"
+					#ftl = yes
+				}
+				last_created_fleet = {
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+				}
+
+				# Battleships
+				if = {
+					limit = {
+						THIS = { is_country_type = fallen_empire}
+					}
+
+					create_ship_design = {
+						design = "NAME_Demi"
+						#ftl = yes
+					}					
+				}
+				else = {
+					create_ship_design = {
+						random_existing_design = "battleship"
+						#ftl = yes
+					}
+				}
+
+				last_created_fleet = {
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+				}
+
+				# Titans
+				random_list = {
+					80 = {}
+					20 = {
+						if = {
+							limit = {
+								THIS = { fleet_power > 150000 }
+							}
+							if = {
+								limit = {
+									THIS = { is_country_type = fallen_empire}
+								}
+
+								create_ship_design = {
+									design = "NAME_Judicator"
+									#ftl = yes
+								}								
+							}
+							else = {
+								create_ship_design = {
+									random_existing_design = "titan"
+									#ftl = yes
+								}
+							}
+
+							last_created_fleet = {
+								create_ship = {
+									name = random
+									design = last_created_design
+									graphical_culture = PREV
+								}
+							}
+						}
+					}
+				}
+
+				# Leviathans
+				random_list = {
+					80 = {}
+					20 = {
+						if = {
+							limit = {
+								OR = {
+									THIS = { fleet_power > 250000 }
+								}
+							}
+							if = {
+								limit = {
+									THIS = { is_country_type = fallen_empire}
+								}
+
+								create_ship_design = {
+									design = "NAME_Judicator"
+									#ftl = yes
+								}								
+							}
+							else = {
+								create_ship_design = {
+									random_existing_design = "leviathan"
+									#ftl = yes
+								}
+							}
+							last_created_fleet = {
+								create_ship = {
+									name = random
+									design = last_created_design
+									graphical_culture = PREV
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	option = {
+		name = avatar_raid_03.a
+	}
+}
+
+# final assault
+country_event = {
+	id = avatar_doomsday.108
+	hide_window = no
+	is_triggered_only = yes
+	picture = GFX_evt_fleet_good
+
+	title = avatar_raid_04.name
+
+	desc = {
+		text = avatar_raid_04.desc
+	}
+
+	immediate = {
+		last_created_fleet = {
+			set_name = "NAME_Alliance_Armada"
+		}
+
+		last_created_country = {
+			set_name = "NAME_Rebel_Alliance_of_Concerned_Empires"
+		}
+
+		FROM = {
+			set_variable = {
+				which = "avatar_enemy_count"
+				value = 1
+			}
+		}
+
+		# Look for countries who hate player with at least some military. Minimum 6 countries regardless of power or opinion.
+		every_country = {
+			limit = {
+				OR = {
+					is_country_type = default
+					is_country_type = fallen_empire
+				}
+				has_communications = FROM
+				NOT = { is_country = FROM }
+			}
+
+			if = {
+				limit = {
+					OR = {
+						AND = {
+							THIS = { fleet_power > 50000 }
+							NOT = {
+								opinion = {
+									who = FROM
+									value > 0
+								}
+							}
+						}
+						FROM = {
+							check_variable = {
+								which = "avatar_enemy_count"
+								value < 7
+							}
+						}
+					}
+				}
+
+
+				# Increment enemy count
+				FROM = {
+					change_variable = {
+						which = "avatar_enemy_count"
+						value = 1
+					}
+				}
+
+				# Corvettes
+				create_ship_design = {
+					random_existing_design = "corvette"
+					#ftl = yes
+				}
+				last_created_fleet = {
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+				}
+
+				# Cruisers
+				create_ship_design = {
+					random_existing_design = "cruiser"
+					#ftl = yes
+				}
+				last_created_fleet = {
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+				}
+
+				# Battleships
+				if = {
+					limit = {
+						THIS = { is_country_type = fallen_empire}
+					}
+
+					create_ship_design = {
+						design = "NAME_Demi"
+						#ftl = yes
+					}					
+				}
+				else = {
+					create_ship_design = {
+						random_existing_design = "battleship"
+						#ftl = yes
+					}
+				}
+				last_created_fleet = {
+					create_ship = {
+						name = random
+						design = last_created_design
+						graphical_culture = PREV
+					}
+				}
+
+				if = {
+					limit = {
+						THIS = { fleet_power > 100000 }
+					}
+					last_created_fleet = {
+						create_ship = {
+							name = random
+							design = last_created_design
+							graphical_culture = PREV
+						}
+						create_ship = {
+							name = random
+							design = last_created_design
+							graphical_culture = PREV
+						}
+					}
+				}
+
+
+				# Titans
+				random_list = {
+					70 = {}
+					21 = {
+						if = {
+							limit = {
+								THIS = { fleet_power > 150000 }
+							}
+							if = {
+								limit = {
+									THIS = { is_country_type = fallen_empire}
+								}
+
+								create_ship_design = {
+									design = "NAME_Judicator"
+									#ftl = yes
+								}								
+							}
+							else = {
+								create_ship_design = {
+									random_existing_design = "titan"
+									#ftl = yes
+								}
+							}
+							last_created_fleet = {
+								create_ship = {
+									name = random
+									design = last_created_design
+									graphical_culture = PREV
+								}
+							}
+						}
+					}
+					9 = {
+						if = {
+							limit = {
+								THIS = { is_country_type = fallen_empire}
+							}
+
+							create_ship_design = {
+								design = "NAME_Judicator"
+								#ftl = yes
+							}							
+						}
+						else = {
+							create_ship_design = {
+								random_existing_design = "titan"
+								#ftl = yes
+							}
+						}
+						last_created_fleet = {
+							create_ship = {
+								name = random
+								design = last_created_design
+								graphical_culture = PREV
+							}
+						}
+					}
+				}
+
+				# Leviathans
+				random_list = {
+					80 = {}
+					15 = {
+						if = {
+							limit = {
+								THIS = { fleet_power > 250000 }
+							}
+							if = {
+								limit = {
+									THIS = { is_country_type = fallen_empire}
+								}
+
+								create_ship_design = {
+									design = "NAME_Judicator"
+									#ftl = yes
+								}								
+							}
+							else = {
+								create_ship_design = {
+									random_existing_design = "leviathan"
+									#ftl = yes
+								}
+							}
+							last_created_fleet = {
+								create_ship = {
+									name = random
+									design = last_created_design
+									graphical_culture = PREV
+								}
+							}
+						}
+					}
+					5 = {
+						if = {
+							limit = {
+								THIS = { is_country_type = fallen_empire}
+							}
+
+							create_ship_design = {
+								design = "NAME_Judicator"
+								#ftl = yes
+							}							
+						}
+						else = {
+							create_ship_design = {
+								random_existing_design = "leviathan"
+								#ftl = yes
+							}
+						}
+						last_created_fleet = {
+							create_ship = {
+								name = random
+								design = last_created_design
+								graphical_culture = PREV
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	option = {
+		name = avatar_raid_04.a
+	}
+}
+
+# break
+country_event = {
+	id = avatar_doomsday.109
+	hide_window = no
+	is_triggered_only = yes
+	picture = GFX_evt_fleet_good
+
+	title = avatar_raid_break.name
+
+	desc = {
+		text = avatar_raid_break.desc
+	}
+
+	immediate = {
+	}
+
+	option = {
+		name = avatar_raid_break.a
+	}
+}
+
+# Avatar Error 01 - Cannot create frame, only one Avatar is allowed
+country_event = {
+	id = avatar_doomsday.199
+	hide_window = no
+	is_triggered_only = yes
+	picture = GFX_evt_unknown_ships
+	show_sound = event_nova_alert
+
+	title = avatar_error_01.name
+
+	desc = {
+		text = avatar_error_01.desc
+	}
+
+	immediate = {
+		# Recreate Avatar Frame
+		FROMFROM = {
+			create_fleet = {
+				effect = {
+					set_owner = ROOT
+					create_ship = {
+						name = "Avatar Constructor"
+						random_existing_design = "avatar_constructor"
+						#graphical_culture = ROOT
+					}
+					set_location = PREV
+				}
+			}
+		}
+	}
+
+	option = {
+		name = avatar_error_01.a
+	}
+}
+
+# Avatar opinion triggers
+# Destroyed a planet - Owners reaction. FROM = planet destroyed
+country_event = {
+	id = avatar_doomsday.801
+	hide_window = yes
+	is_triggered_only = yes	
+	
+	immediate = {
+		FROM = { OWNER = { country_event = { id = titan_doomsday.804 } } }
+	}
+}
+
+# test
+country_event = {
+	id = avatar_doomsday.998
+	hide_window = yes
+	is_triggered_only = yes
+	picture = GFX_evt_physics_research
+
+	title = pirate_trigger
+
+	desc = {
+		text = you_are_system
+	}
+
+	immediate = {
+		#if = {
+		#	limit = {
+		#		any_system = {
+		#			has_star_flag = avatar_build_system
+		#		}
+		#	}
+
+		country_event = { id = avatar_doomsday.999 days = 15}
+		#}
+	}
+}
+
+country_event = {
+	id = avatar_doomsday.999
+	hide_window = no
+	is_triggered_only = yes
+	picture = GFX_evt_physics_research
+
+	title = pirate_trigger
+
+	desc = {
+		text = you_are_system
+	}
+
+	immediate = {
+		#if = {
+		#	limit = {
+		#		any_system = {
+		#			has_star_flag = avatar_build_system
+		#		}
+		#	}
+
+		#	country_event = { id = avatar_doomsday.999 }
+		#}
+	}
+
+	option = {
+		name = ok
+	}
+}
